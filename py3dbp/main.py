@@ -1,7 +1,7 @@
 from .constants import RotationType, Axis
 from .auxiliary_methods import intersect, set_to_decimal
 
-DEFAULT_NUMBER_OF_DECIMALS = 3
+DEFAULT_DECIMALS = 1
 START_POSITION = [0, 0, 0]
 
 
@@ -12,9 +12,14 @@ class Item:
         self.height = height
         self.depth = depth
         self.weight = weight
+        self.volume = width * height * depth
         self.rotation_type = 0
         self.position = START_POSITION
-        self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
+        self.number_of_decimals = DEFAULT_DECIMALS
+
+    def get_position(self):
+        pos = self.position
+        return f'{pos[0]},{pos[2]},{pos[2]}'
 
     def format_numbers(self, number_of_decimals):
         self.width = set_to_decimal(self.width, number_of_decimals)
@@ -24,15 +29,17 @@ class Item:
         self.number_of_decimals = number_of_decimals
 
     def string(self):
-        return "%s(%sx%sx%s, weight: %s) pos(%s) rt(%s) vol(%s)" % (
-            self.name, self.width, self.height, self.depth, self.weight,
-            self.position, self.rotation_type, self.get_volume()
-        )
+        dimensions = f"{self.width}, {self.height}, {self.depth}"
+        rotation = ''
+        if self.rotation_type != 1:
+            rotation = f'\trot:{self.rotation_type}'
+        # pos_rot_vol = f"\tpos:{self.get_position()}\t\tvol:{self.get_product_volume_str()}{rotation}"
+        # details = f"{self.name} {dimensions}, weight:{self.weight}, {pos_rot_vol}"
+        res = f"{self.name}, {self.weight} gm, {self.volume}"
+        return res
 
-    def get_volume(self):
-        return set_to_decimal(
-            self.width * self.height * self.depth, self.number_of_decimals
-        )
+    def get_product_volume_str(self):
+        return set_to_decimal(self.width * self.height * self.depth, self.number_of_decimals)
 
     def get_dimension(self):
         if self.rotation_type == RotationType.RT_WHD:
@@ -59,10 +66,12 @@ class Bin:
         self.width = width
         self.height = height
         self.depth = depth
+        volume = width * height * depth
+        self.volume = volume
         self.max_weight = max_weight
         self.items = []
         self.unfitted_items = []
-        self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
+        self.number_of_decimals = DEFAULT_DECIMALS
 
     def format_numbers(self, number_of_decimals):
         self.width = set_to_decimal(self.width, number_of_decimals)
@@ -71,63 +80,61 @@ class Bin:
         self.max_weight = set_to_decimal(self.max_weight, number_of_decimals)
         self.number_of_decimals = number_of_decimals
 
-    def string(self):
-        return "%s(%sx%sx%s, max_weight:%s) vol(%s)" % (
-            self.name, self.width, self.height, self.depth, self.max_weight,
-            self.get_volume()
-        )
+    def bin_str(self):
+        dimensions = f"{self.width},{self.height},{self.depth}"
+        products_volume = self.get_products_volume()
+        res = f"{self.name} => vol_detail: {dimensions},\tmax_weight:{self.max_weight},\tvol:{self.get_volume()}"
+        res += f"\tproducts_volume:{products_volume}"
+        return res
 
     def get_volume(self):
-        return set_to_decimal(
-            self.width * self.height * self.depth, self.number_of_decimals
-        )
+        return set_to_decimal(self.volume, self.number_of_decimals)
 
     def get_total_weight(self):
         total_weight = 0
-
         for item in self.items:
             total_weight += item.weight
-
         return set_to_decimal(total_weight, self.number_of_decimals)
 
     def put_item(self, item, pivot):
         fit = False
         valid_item_position = item.position
         item.position = pivot
-
-        for i in range(0, len(RotationType.ALL)):
+        i = 0
+        # for i in range(0, len(RotationType.ALL)):
+        while i < 1:
+            i = 1
             item.rotation_type = i
             dimension = item.get_dimension()
-            if (
-                self.width < pivot[0] + dimension[0] or
-                self.height < pivot[1] + dimension[1] or
-                self.depth < pivot[2] + dimension[2]
-            ):
+            nmw = self.width < pivot[0] + dimension[0]
+            nmh = self.height < pivot[1] + dimension[1]
+            nmd = self.depth < pivot[2] + dimension[2]
+            if nmw or nmh or nmd:
                 continue
-
             fit = True
-
             for current_item_in_bin in self.items:
                 if intersect(current_item_in_bin, item):
                     fit = False
                     break
-
             if fit:
                 if self.get_total_weight() + item.weight > self.max_weight:
                     fit = False
                     return fit
-
                 self.items.append(item)
 
             if not fit:
                 item.position = valid_item_position
-
             return fit
-
         if not fit:
             item.position = valid_item_position
 
         return fit
+
+    def get_products_volume(self):
+        volume = 0
+        for item in self.items:
+            volume += item.volume
+        return volume
 
 
 class Packer:
@@ -137,28 +144,24 @@ class Packer:
         self.unfit_items = []
         self.total_items = 0
 
-    def add_bin(self, bin):
-        return self.bins.append(bin)
+    def add_bin(self, box):
+        return self.bins.append(box)
 
     def add_item(self, item):
         self.total_items = len(self.items) + 1
 
         return self.items.append(item)
 
-    def pack_to_bin(self, bin, item):
+    @classmethod
+    def pack_to_bin(cls, box, item):
         fitted = False
-
-        if not bin.items:
-            response = bin.put_item(item, START_POSITION)
-
+        if not box.items:
+            response = box.put_item(item, START_POSITION)
             if not response:
-                bin.unfitted_items.append(item)
-
+                box.unfitted_items.append(item)
             return
-
         for axis in range(0, 3):
-            items_in_bin = bin.items
-
+            items_in_bin = box.items
             for ib in items_in_bin:
                 pivot = [0, 0, 0]
                 w, h, d = ib.get_dimension()
@@ -181,36 +184,39 @@ class Packer:
                         ib.position[2] + d
                     ]
 
-                if bin.put_item(item, pivot):
+                if box.put_item(item, pivot):
                     fitted = True
                     break
             if fitted:
                 break
 
         if not fitted:
-            bin.unfitted_items.append(item)
+            box.unfitted_items.append(item)
 
-    def pack(
-        self, bigger_first=False, distribute_items=False,
-        number_of_decimals=DEFAULT_NUMBER_OF_DECIMALS
-    ):
-        for bin in self.bins:
-            bin.format_numbers(number_of_decimals)
+    def pack(self, bigger_first=False, distribute_items=False, number_of_decimals=DEFAULT_DECIMALS):
+        for box in self.bins:
+            box.format_numbers(number_of_decimals)
 
         for item in self.items:
             item.format_numbers(number_of_decimals)
 
-        self.bins.sort(
-            key=lambda bin: bin.get_volume(), reverse=bigger_first
-        )
-        self.items.sort(
-            key=lambda item: item.get_volume(), reverse=bigger_first
-        )
+        # self.bins.sort(key=lambda bx: bx.get_volume(), reverse=bigger_first)
+        self.items.sort(key=lambda it: it.volume, reverse=bigger_first)
 
-        for bin in self.bins:
+        prev_box = None
+        for box in self.bins:
             for item in self.items:
-                self.pack_to_bin(bin, item)
+                self.__class__.pack_to_bin(box, item)
 
             if distribute_items:
-                for item in bin.items:
+                for item in box.items:
                     self.items.remove(item)
+            box.items.sort(key=lambda it: it.name)
+            if prev_box:
+                if prev_box.items == box.items:
+                    prev_box.items.items = []
+
+            prev_box = box
+            box.unfitted_items.sort(key=lambda it: it.name)
+            if not box.unfitted_items:
+                break
