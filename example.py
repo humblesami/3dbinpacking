@@ -16,7 +16,7 @@ def packing_process():
         [4, 4, 3, 4],
         [8, 4, 4, 2],
         [4, 5, 4, 5],
-        [9, 3, 5, 6],
+        [9, 3, 4, 6],
         [5, 6, 2, 3],
     ]
 
@@ -61,14 +61,11 @@ def packing_process():
 
             if not b.unfitted_items:
                 continue
-            print("UNFITTED ITEMS:")
-            for item in b.unfitted_items:
-                print("====> ", item.detailed_str())
 
     add_bins()
 
     sn = 1
-    en = 16
+    en = 5
     originals = products
     while sn < en:
         products = products + originals

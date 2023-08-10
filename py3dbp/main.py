@@ -184,9 +184,7 @@ class Packer:
     def pack_to_bin(cls, box, item):
         fitted = False
         if not box.items:
-            response = box.put_item(item, START_POSITION)
-            if not response:
-                box.unfitted_items.append(item)
+            box.put_item(item, START_POSITION)
             return
         for axis in range(0, 3):
             items_in_bin = box.items
@@ -217,9 +215,6 @@ class Packer:
                     break
             if fitted:
                 break
-
-        if not fitted:
-            box.unfitted_items.append(item)
 
     def pack(self, max_dims, bigger_first=False, distribute_items=True, number_of_decimals=DEFAULT_DECIMALS):
         for box in self.bin_types:
@@ -262,7 +257,22 @@ class Packer:
             elif not last_full:
                 break
 
-            if box.items == valid_items:
+            before_removal = []
+            [before_removal.append(x) for x in valid_items]
+
+            len_vi = len(before_removal)
+            unequal = False
+            if len(box.items) == len_vi:
+                i = 0
+                while i < len_vi:
+                    if box.items[i] != before_removal[i]:
+                        unequal = True
+                        break
+                    i += 1
+            else:
+                unequal = True
+
+            if not unequal:
                 if last_full:
                     last_full.items = []
                 last_full = box
@@ -282,7 +292,6 @@ class Packer:
                     valid_items.remove(item)
 
             box.items.sort(key=lambda it: it.name)
-            box.unfitted_items.sort(key=lambda it: it.name)
             if not valid_items:
                 a = 1
                 break
