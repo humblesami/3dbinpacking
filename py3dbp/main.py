@@ -216,7 +216,7 @@ class Packer:
             if fitted:
                 break
 
-    def pack(self, max_dims, bigger_first=False, distribute_items=True, number_of_decimals=DEFAULT_DECIMALS):
+    def pack(self, bigger_first=False, distribute_items=True, number_of_decimals=DEFAULT_DECIMALS):
         for box in self.bin_types:
             box.format_numbers(number_of_decimals)
 
@@ -240,7 +240,7 @@ class Packer:
                 unfit_items.append(item)
 
         self.unfit_items = unfit_items
-        last_full = None
+        last_box = None
         while valid_items:
             packable = []
             if cb_index > max_index:
@@ -254,33 +254,30 @@ class Packer:
             if packable:
                 for item in packable:
                     self.__class__.pack_to_bin(box, item)
-            elif not last_full:
+            elif not last_box:
                 break
 
-            before_removal = []
-            [before_removal.append(x) for x in valid_items]
-
-            len_vi = len(before_removal)
-            unequal = False
+            all_fitted = True
+            len_vi = len(valid_items)
             if len(box.items) == len_vi:
                 i = 0
                 while i < len_vi:
-                    if box.items[i] != before_removal[i]:
-                        unequal = True
+                    if box.items[i] != valid_items[i]:
+                        all_fitted = False
                         break
                     i += 1
             else:
-                unequal = True
+                all_fitted = False
 
-            if not unequal:
-                if last_full:
-                    last_full.items = []
-                last_full = box
+            if all_fitted:
+                if last_box:
+                    last_box.items = []
+                last_box = box
                 cb_index += cb_inc
                 continue
             else:
-                if last_full:
-                    box = last_full
+                if last_box:
+                    box = last_box
 
             if box.items:
                 self.bins.append(box)
@@ -291,7 +288,6 @@ class Packer:
                 for item in box.items:
                     valid_items.remove(item)
 
-            box.items.sort(key=lambda it: it.name)
+            # box.items.sort(key=lambda it: it.name)
             if not valid_items:
-                a = 1
                 break

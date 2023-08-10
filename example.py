@@ -11,7 +11,7 @@ def packing_process():
         [5, 2, 5, 4],
         [6, 5, 3, 2],
         [7, 4, 4, 6],
-        [5, 3, 6, 5],
+        [5, 3, 5, 5],
         [8, 2, 2, 3],
         [4, 4, 3, 4],
         [8, 4, 4, 2],
@@ -22,10 +22,10 @@ def packing_process():
 
     def add_bins():
         bin_types = [
-            BinType('large2', 20, 16, 6, 70.0),
-            BinType('large', 16, 16, 5, 70.0),
-            BinType('medium', 10, 10, 5, 70.0),
-            BinType('small', 10, 5, 4, 70.0)
+            BinType('large', 20, 16, 6, 70.0),
+            BinType('medium', 16, 16, 5, 50.0),
+            BinType('small', 10, 10, 5, 40.0),
+            BinType('x-small', 10, 5, 4, 30.0)
         ]
         packer.bin_types = bin_types
 
@@ -46,40 +46,56 @@ def packing_process():
                 max_width = to_pack.width
             packer.add_item(to_pack)
         max_dims = [max_width, max_height, max_depth]
-        packer.pack(max_dims)
+        # packer.pack(bigger_first=True)
+        packer.pack()
         return pc
 
     def show_packed_items():
+        used_bin_types = {}
+        for b in packer.bins:
+            if used_bin_types.get(b.name):
+                used_bin_types[b.name]['count'] += 1
+                used_bin_types[b.name]['items'] += len(b.items)
+            else:
+                used_bin_types[b.name] = {"count": 1, 'items': len(b.items)}
+
         for b in packer.bins:
             if not b.items:
                 continue
 
             print("\nbox => " + b.bin_str())
-            print("FITTED ITEMS:")
-            for item in b.items:
-                print("====> ", item.string())
+            print(f"FITTED ITEMS: {len(b.items)}")
+            for product in b.items:
+                print("====> ", product.string())
 
             if not b.unfitted_items:
                 continue
 
-    add_bins()
+        print("\nUsed bins summary")
+        for bin_type in used_bin_types:
+            print(f"{bin_type.title()} {used_bin_types[bin_type]['count']}, items={used_bin_types[bin_type]['items']}")
 
-    sn = 1
-    en = 5
-    originals = products
-    while sn < en:
-        products = products + originals
-        sn += 1
+    def increase_products(original, mul):
+        sn = 1
+        res = []
+        while sn <= mul:
+            res = res + original
+            sn += 1
+        return res
+
+    products = increase_products(products, 3)
+    add_bins()
 
     start = time.time()
     pack_items()
     end = time.time()
-    time_taken = f"\nTime taken with {en * 10} items => {end - start}"
+    time_taken = f"\nTime taken with {len(products)} items => {end - start}"
 
     show_packed_items()
-    print("\nCompletely Unfit Items")
-    for item in packer.unfit_items:
-        print("==>", item.detailed_str())
+    if packer.unfit_items:
+        print("\nCompletely Unfit Items")
+        for item in packer.unfit_items:
+            print("==>", item.detailed_str())
 
     print(time_taken)
 
