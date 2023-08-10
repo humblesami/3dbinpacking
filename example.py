@@ -48,7 +48,7 @@ def packing(complexity):
                 continue
             print("UNFITTED ITEMS:")
             for item in b.unfitted_items:
-                print("====> ", item.string())
+                print("====> ", item.detailed_str())
 
     add_bins()
     cnt = 0

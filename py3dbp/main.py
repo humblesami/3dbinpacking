@@ -29,14 +29,17 @@ class Item:
         self.number_of_decimals = number_of_decimals
 
     def string(self):
+        res = f"{self.name}, {self.weight} gm, {self.volume}"
+        return res
+
+    def detailed_str(self):
         dimensions = f"{self.width}, {self.height}, {self.depth}"
         rotation = ''
         if self.rotation_type != 1:
             rotation = f'\trot:{self.rotation_type}'
-        # pos_rot_vol = f"\tpos:{self.get_position()}\t\tvol:{self.get_product_volume_str()}{rotation}"
-        # details = f"{self.name} {dimensions}, weight:{self.weight}, {pos_rot_vol}"
-        res = f"{self.name}, {self.weight} gm, {self.volume}"
-        return res
+        pos_rot_vol = f"\tpos:{self.get_position()}\t\tvol:{self.get_product_volume_str()}{rotation}"
+        details = f"{self.name} {dimensions}, weight:{self.weight}, {pos_rot_vol}"
+        return details
 
     def get_product_volume_str(self):
         return set_to_decimal(self.width * self.height * self.depth, self.number_of_decimals)
@@ -100,10 +103,9 @@ class Bin:
         fit = False
         valid_item_position = item.position
         item.position = pivot
-        i = 0
-        # for i in range(0, len(RotationType.ALL)):
-        while i < 1:
-            i = 1
+        for i in range(0, len(RotationType.ALL)):
+            if i > 0:
+                break
             item.rotation_type = i
             dimension = item.get_dimension()
             nmw = self.width < pivot[0] + dimension[0]
