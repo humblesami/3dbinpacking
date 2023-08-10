@@ -17,6 +17,9 @@ class Item:
         self.position = START_POSITION
         self.number_of_decimals = DEFAULT_DECIMALS
 
+    def __str__(self):
+        return self.name
+
     def get_position(self):
         pos = self.position
         return f'{pos[0]},{pos[2]},{pos[2]}'
@@ -73,6 +76,9 @@ class BinType:
         self.volume = volume
         self.max_weight = max_weight
 
+    def __str__(self):
+        return self.name
+
     def format_numbers(self, number_of_decimals):
         self.width = set_to_decimal(self.width, number_of_decimals)
         self.height = set_to_decimal(self.height, number_of_decimals)
@@ -98,6 +104,9 @@ class Bin:
         self.items = []
         self.unfitted_items = []
         self.number_of_decimals = DEFAULT_DECIMALS
+
+    def __str__(self):
+        return self.name
 
     def bin_str(self):
         dimensions = f"{self.width},{self.height},{self.depth}"
@@ -220,13 +229,15 @@ class Packer:
         for item in all_items:
             item.format_numbers(number_of_decimals)
 
+        cb_inc = 1
+        cb_index = 0
+        max_index = len(self.bin_types) - 1
         # self.bin_types.sort(key=lambda bx: bx.volume, reverse=bigger_first)
-        cbt = self.bin_types[len(self.bin_types) - 1]
-        cbt = self.bin_types[0]
         all_items.sort(key=lambda it: it.volume, reverse=bigger_first)
 
         valid_items = []
         unfit_items = []
+        cbt = self.bin_types[cb_index]
         for item in all_items:
             if not cbt.can_not_fit(item):
                 valid_items.append(item)
@@ -234,17 +245,33 @@ class Packer:
                 unfit_items.append(item)
 
         self.unfit_items = unfit_items
-        prev_box = None
-        for cbt in self.bin_types:
+        last_full = None
+        while valid_items:
             packable = []
+            if cb_index > max_index:
+                print("\n\nBug Here in cb_index\n\n")
+                break
+            cbt = self.bin_types[cb_index]
             for item in valid_items:
                 if not cbt.can_not_fit(item):
                     packable.append(item)
-            if not packable:
-                continue
             box = Bin(cbt)
-            for item in packable:
-                self.__class__.pack_to_bin(box, item)
+            if packable:
+                for item in packable:
+                    self.__class__.pack_to_bin(box, item)
+            elif not last_full:
+                break
+
+            if box.items == valid_items:
+                if last_full:
+                    last_full.items = []
+                last_full = box
+                cb_index += cb_inc
+                continue
+            else:
+                if last_full:
+                    box = last_full
+
             if box.items:
                 self.bins.append(box)
             else:
@@ -255,11 +282,7 @@ class Packer:
                     valid_items.remove(item)
 
             box.items.sort(key=lambda it: it.name)
-            if prev_box:
-                if prev_box.items == box.items:
-                    prev_box.items.items = []
-
-            prev_box = box
             box.unfitted_items.sort(key=lambda it: it.name)
             if not valid_items:
+                a = 1
                 break
