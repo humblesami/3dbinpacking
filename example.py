@@ -1,6 +1,7 @@
 import time
 
 from py3dbp import Packer, Bin, Item
+from py3dbp.main import BinType
 
 
 def packing(complexity):
@@ -21,17 +22,30 @@ def packing(complexity):
     ]
 
     def add_bins():
-        packer.add_bin(Bin('large2', 20, 16, 5, 70.0))
-        packer.add_bin(Bin('large', 16, 16, 5, 70.0))
-        packer.add_bin(Bin('medium', 10, 10, 5, 70.0))
-        packer.add_bin(Bin('small', 10, 5, 4, 70.0))
+        bin_types = [
+            BinType('large2', 20, 16, 6, 70.0),
+            BinType('large', 16, 16, 5, 70.0),
+            BinType('medium', 10, 10, 5, 70.0),
+            BinType('small', 10, 5, 4, 70.0)
+        ]
+        packer.bin_types = bin_types
 
     def pack_items(pc):
+        max_width = 0
+        max_height = 0
+        max_depth = 0
         for item in products:
             pc += 1
             p_item = Item(f'p{pc-1}', item[0], item[1], item[2], item[3])
+            if p_item.height > max_height:
+                max_height = p_item.height
+            if p_item.depth > max_depth:
+                max_depth = p_item.depth
+            if p_item.width > max_width:
+                max_width = p_item.width
             packer.add_item(p_item)
-        packer.pack()
+        max_dims = [max_width, max_height, max_depth]
+        packer.pack(max_dims)
         return pc
 
     def show_packed_items():
@@ -56,6 +70,9 @@ def packing(complexity):
         pack_items(cnt * 10)
         cnt += 1
     show_packed_items()
+    print("\nCompletely Unfit Items")
+    for item in packer.unfit_items:
+        print("==>", item.detailed_str())
 
 
 def call_packing_process():

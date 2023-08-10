@@ -63,7 +63,7 @@ class Item:
         return dimension
 
 
-class Bin:
+class BinType:
     def __init__(self, name, width, height, depth, max_weight):
         self.name = name
         self.width = width
@@ -72,9 +72,6 @@ class Bin:
         volume = width * height * depth
         self.volume = volume
         self.max_weight = max_weight
-        self.items = []
-        self.unfitted_items = []
-        self.number_of_decimals = DEFAULT_DECIMALS
 
     def format_numbers(self, number_of_decimals):
         self.width = set_to_decimal(self.width, number_of_decimals)
@@ -82,6 +79,25 @@ class Bin:
         self.depth = set_to_decimal(self.depth, number_of_decimals)
         self.max_weight = set_to_decimal(self.max_weight, number_of_decimals)
         self.number_of_decimals = number_of_decimals
+
+    def can_not_fit(self, item):
+        res = item.width >= self.width or item.height >= self.height or item.depth >= self.depth
+        if res:
+            a = 1
+        return res
+
+
+class Bin:
+    def __init__(self, bin_type):
+        self.name = bin_type.name
+        self.width = bin_type.width
+        self.height = bin_type.height
+        self.depth = bin_type.depth
+        self.volume = bin_type.volume
+        self.max_weight = bin_type.max_weight
+        self.items = []
+        self.unfitted_items = []
+        self.number_of_decimals = DEFAULT_DECIMALS
 
     def bin_str(self):
         dimensions = f"{self.width},{self.height},{self.depth}"
@@ -143,6 +159,7 @@ class Packer:
     def __init__(self):
         self.bins = []
         self.items = []
+        self.bin_types = []
         self.unfit_items = []
         self.total_items = 0
 
@@ -195,24 +212,48 @@ class Packer:
         if not fitted:
             box.unfitted_items.append(item)
 
-    def pack(self, bigger_first=False, distribute_items=False, number_of_decimals=DEFAULT_DECIMALS):
-        for box in self.bins:
+    def pack(self, max_dims, bigger_first=False, distribute_items=True, number_of_decimals=DEFAULT_DECIMALS):
+        for box in self.bin_types:
             box.format_numbers(number_of_decimals)
 
-        for item in self.items:
+        all_items = self.items
+        for item in all_items:
             item.format_numbers(number_of_decimals)
 
-        # self.bins.sort(key=lambda bx: bx.get_volume(), reverse=bigger_first)
-        self.items.sort(key=lambda it: it.volume, reverse=bigger_first)
+        # self.bin_types.sort(key=lambda bx: bx.volume, reverse=bigger_first)
+        cbt = self.bin_types[len(self.bin_types) - 1]
+        cbt = self.bin_types[0]
+        all_items.sort(key=lambda it: it.volume, reverse=bigger_first)
 
+        valid_items = []
+        unfit_items = []
+        for item in all_items:
+            if not cbt.can_not_fit(item):
+                valid_items.append(item)
+            else:
+                unfit_items.append(item)
+
+        self.unfit_items = unfit_items
         prev_box = None
-        for box in self.bins:
-            for item in self.items:
+        for cbt in self.bin_types:
+            packable = []
+            for item in valid_items:
+                if not cbt.can_not_fit(item):
+                    packable.append(item)
+            if not packable:
+                continue
+            box = Bin(cbt)
+            for item in packable:
                 self.__class__.pack_to_bin(box, item)
+            if box.items:
+                self.bins.append(box)
+            else:
+                continue
 
             if distribute_items:
                 for item in box.items:
-                    self.items.remove(item)
+                    valid_items.remove(item)
+
             box.items.sort(key=lambda it: it.name)
             if prev_box:
                 if prev_box.items == box.items:
@@ -220,5 +261,5 @@ class Packer:
 
             prev_box = box
             box.unfitted_items.sort(key=lambda it: it.name)
-            if not box.unfitted_items:
+            if not valid_items:
                 break
