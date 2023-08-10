@@ -1,7 +1,7 @@
 from .constants import RotationType, Axis
 from .auxiliary_methods import intersect, set_to_decimal
 
-DEFAULT_DECIMALS = 1
+DEFAULT_DECIMALS = 3
 START_POSITION = [0, 0, 0]
 
 

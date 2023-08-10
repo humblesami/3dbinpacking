@@ -38,12 +38,6 @@ def packing_process():
         for product in products:
             pc += 1
             to_pack = Item(f'p{pc-1}', product[0], product[1], product[2], product[3])
-            if to_pack.height > max_height:
-                max_height = to_pack.height
-            if to_pack.depth > max_depth:
-                max_depth = to_pack.depth
-            if to_pack.width > max_width:
-                max_width = to_pack.width
             packer.add_item(to_pack)
         max_dims = [max_width, max_height, max_depth]
         # packer.pack(bigger_first=True)
@@ -83,13 +77,13 @@ def packing_process():
             sn += 1
         return res
 
-    products = increase_products(products, 3)
+    products = increase_products(products, 2)
     add_bins()
 
     start = time.time()
     pack_items()
     end = time.time()
-    time_taken = f"\nTime taken with {len(products)} items => {end - start}"
+    time_taken = f"\nItems => {len(products)}, Time in seconds => {round((end - start), 2)}"
 
     show_packed_items()
     if packer.unfit_items:
