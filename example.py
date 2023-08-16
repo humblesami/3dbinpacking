@@ -8,24 +8,24 @@ def packing_process():
     packer = Packer()
     # packer.add_item(Item('p1', 5, 2, 2, 1))
     products = [
-        [5, 2, 5, 4],
-        [6, 5, 3, 2],
-        [7, 4, 4, 6],
-        [5, 3, 5, 5],
-        [8, 2, 2, 3],
-        [4, 4, 3, 4],
-        [8, 4, 4, 2],
-        [4, 5, 4, 5],
-        [9, 3, 4, 6],
-        [5, 6, 2, 3],
+        [5, 2, 3, 4],
+        # [6, 5, 3, 2],
+        # [7, 4, 4, 6],
+        # [5, 3, 5, 5],
+        # [8, 2, 2, 3],
+        # [4, 4, 3, 4],
+        # [8, 4, 4, 2],
+        # [4, 5, 4, 5],
+        # [9, 3, 4, 6],
+        # [5, 6, 2, 3],
     ]
 
     def add_bins():
         bin_types = [
-            BinType('large', 20, 16, 6, 70.0),
-            BinType('medium', 16, 16, 5, 50.0),
-            BinType('small', 10, 10, 5, 40.0),
-            BinType('x-small', 10, 5, 4, 30.0)
+            BinType('SMALLEST', 190, 95, 290, 3.23),
+            BinType('SMALL', 295, 95, 370, 5.39),
+            BinType('MEDIUM', 295, 135, 370, 7.55),
+            BinType('LARGE', 295, 185, 370, 10.78)
         ]
         packer.bin_types = bin_types
 
