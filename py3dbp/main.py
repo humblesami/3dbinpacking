@@ -253,7 +253,7 @@ class Packer:
         while valid_items:
             packable = []
             if cb_index > max_index:
-                print("\n\nBug Here in cb_index\n\n")
+                print(f"\n\nCould not be packed in any\n{valid_items[0].detailed_str()}\n")
                 break
             cbt = self.bin_types[cb_index]
             for item in valid_items:
@@ -263,7 +263,8 @@ class Packer:
             if packable:
                 len_items = len(box.items)
                 for item in packable:
-                    self.__class__.pack_to_bin(box, item)
+                    fitted = self.__class__.pack_to_bin(box, item)
+                    a = 1
                 if len_items == len(box.items):
                     print(f'\nBug in packing, none of packable items is packed in {box.bin_str()}')
                     return
@@ -286,8 +287,9 @@ class Packer:
                 if last_box:
                     last_box.items = []
                 last_box = box
-                cb_index += cb_inc
-                continue
+                if cb_index < max_index:
+                    cb_index += cb_inc
+                    continue
             else:
                 if last_box:
                     box = last_box

@@ -7,17 +7,20 @@ def packing_process():
 
     packer = Packer()
     # packer.add_item(Item('p1', 5, 2, 2, 1))
+    # products = [
+    #     [5, 2, 3, 4],
+    #     # [6, 5, 3, 2],
+    #     # [7, 4, 4, 6],
+    #     # [5, 3, 5, 5],
+    #     # [8, 2, 2, 3],
+    #     # [4, 4, 3, 4],
+    #     # [8, 4, 4, 2],
+    #     # [4, 5, 4, 5],
+    #     # [9, 3, 4, 6],
+    #     # [5, 6, 2, 3],
+    # ]
     products = [
-        [5, 2, 3, 4],
-        # [6, 5, 3, 2],
-        # [7, 4, 4, 6],
-        # [5, 3, 5, 5],
-        # [8, 2, 2, 3],
-        # [4, 4, 3, 4],
-        # [8, 4, 4, 2],
-        # [4, 5, 4, 5],
-        # [9, 3, 4, 6],
-        # [5, 6, 2, 3],
+        [5, 2, 3, 3]
     ]
 
     def add_bins():
@@ -77,7 +80,7 @@ def packing_process():
             sn += 1
         return res
 
-    products = increase_products(products, 2)
+    products = increase_products(products, 1)
     add_bins()
 
     start = time.time()
